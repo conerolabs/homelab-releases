@@ -1,13 +1,45 @@
 #!/bin/bash
+set -eo pipefail
+
 RELEASE_URL='https://github.com/conerolabs/homelab-releases/raw/test/conerhomelab-2_0_0-alpha.tar.gz' #TODO
-TMP_DIR=~/tmp/homelabinstaller
-HOMELAB_DIR=$TMP_DIR/homelab
-INSTALL_DATA_DIR=$TMP_DIR/install
+TMP_DIR="$HOME/tmp/homelabinstaller"
+HOMELAB_DIR="$TMP_DIR/homelab"
+INSTALL_DATA_DIR="$TMP_DIR/install"
+BACKUP_DIR=""
+
+# Function to clean up temporary directory and restore backup on error
+cleanup() {
+    local exit_code=$?
+    trap - EXIT
+    set +e
+    if [ $exit_code -ne 0 ]; then
+        echo -e "\nAn error occurred during installation (exit code: $exit_code)."
+
+        if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
+            echo "Restoring installation directory from backup $BACKUP_DIR ..."
+            rm -rf "$INSTALL_DIR" 2>/dev/null || sudo rm -rf "$INSTALL_DIR"
+            mv "$BACKUP_DIR" "$INSTALL_DIR" 2>/dev/null || sudo mv "$BACKUP_DIR" "$INSTALL_DIR"
+            echo "Backup restored successfully."
+        fi
+    fi
+    if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
+        echo "Cleaning up temporary directory $TMP_DIR ..."
+        rm -rf "$TMP_DIR"
+    fi
+}
+
+trap cleanup EXIT
 
 read -r -p "Enter the Homelab installation directory (default: ~/conerhomelab): " INSTALL_DIR
-INSTALL_DIR=${INSTALL_DIR:-~/conerhomelab}
+INSTALL_DIR=${INSTALL_DIR:-$HOME/conerhomelab}
+
 # Backup existing installation if present
-cp -r "$INSTALL_DIR" "$INSTALL_DIR".backup.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+if [ -d "$INSTALL_DIR" ]; then
+    CURRENT_BACKUP="${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
+    echo "Backing up existing installation to $CURRENT_BACKUP ..."
+    cp -r "$INSTALL_DIR" "$CURRENT_BACKUP"
+    BACKUP_DIR="$CURRENT_BACKUP"
+fi
 
 #0. Downloads and extracts the release files from the repository in a tmp directory
 echo "Downloading and extracting release files from repository ..."
@@ -28,7 +60,7 @@ fi
 # - aggiunge le nuove
 # - aggiorna tutti i valori che nel template non sono vuoti
 # - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
-python3 -c "from setup_env import setup_env; setup_env('$INSTALL_DATA_DIR/.env', '$HOMELAB_DIR/.env')"
+PYTHONPATH="$INSTALL_DATA_DIR/scripts" python3 -c "from setup_env import setup_env; setup_env('$INSTALL_DATA_DIR/.env', '$HOMELAB_DIR/.env')"
 #! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
 
 #2. Copy old secrets files in the installer directory
@@ -39,7 +71,7 @@ cp -r "$INSTALL_DIR"/gatus/secrets "$HOMELAB_DIR"/gatus/secrets 2>/dev/null || t
 cp -r "$INSTALL_DIR"/rustical/secrets "$HOMELAB_DIR"/rustical/secrets 2>/dev/null || true
 cp -r "$INSTALL_DIR"/web-config/secrets "$HOMELAB_DIR"/web-config/secrets 2>/dev/null || true
 
-docker compose -f "$INSTALL_DIR"/docker-compose.yml down || true
+docker compose -f "$INSTALL_DIR"/docker-compose.yml down 2>/dev/null || true
 
 # TODO: Valuate if to run pre-install script (for example to update the OS) or directly the setup scripts
 # TODO: Valuate if to run deps-install script (for example to install docker) or directly the setup scripts
@@ -53,7 +85,7 @@ docker compose -f "$INSTALL_DIR"/docker-compose.yml down || true
 #4. Copy homelab files into installation directory
 echo "Copying homelab files into $INSTALL_DIR ..."
 # Remove INSTALL_DIR for a fresh installation
-rm -rf "$INSTALL_DIR" || echo "Installation directory not found, creating a new one"
+rm -rf "$INSTALL_DIR" 2>/dev/null || echo "Installation directory not found, creating a new one"
 mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
@@ -65,7 +97,25 @@ sudo cp -ru $HOMELAB_DIR/. "$INSTALL_DIR"/
 # sudo rm -f $TO_REMOVE_FILES
 # sudo rm -rf $TO_REMOVE_DIRS
 
-echo "Cleaning up temporary installation files ..."
-rm -rf "$TMP_DIR"
+# TODO: deploy configuration server
+## Install nvm and nodejs
+NODE_CUR_VER=$(node -v 2>/dev/null || true)
+if [ -n "$NODE_VERSION" ] && [ "$NODE_CUR_VER" == "$NODE_VERSION" ]; then
+    echo "Node is already installed"
+else
+    cd ~
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+    export NVM_DIR="$HOME/.nvm"
+    source ~/.bashrc #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+    # Install nodejs (LTS version)
+    # nvm install --lts
+    if [ -n "$NODE_VERSION" ]; then
+        nvm install "$NODE_VERSION"
+    fi
+fi
+
+## TODO: deploy web config server;
+## TODO: deploy web config ui;
 
 #docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
