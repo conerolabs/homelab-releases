@@ -90,7 +90,7 @@ mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
 # L'opzione -r è necessaria per copiare ricorsivamente le directory e i loro contenuti.
-sudo cp -ru $HOMELAB_DIR/. "$INSTALL_DIR"/
+cp -ru "$HOMELAB_DIR"/. "$INSTALL_DIR"/
 
 # Occorrerà dunque eliminare manualmente i file che non servono più, ad esempio quelli generati dai container dopo l'installazione iniziale.
 # In questo modo, se in futuro aggiorneremo i file di configurazione nella cartella homelab, basterà rilanciare questo script per copiare solo i file aggiornati, senza sovrascrivere quelli che sono stati modificati manualmente dopo l'installazione iniziale.
