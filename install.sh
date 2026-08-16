@@ -7,6 +7,9 @@ HOMELAB_DIR="$TMP_DIR/homelab"
 INSTALL_DATA_DIR="$TMP_DIR/install"
 BACKUP_DIR=""
 
+NVM_VERSION='v0.40.6'
+NODE_VERSION='v24.18.0'
+
 installNodejs() {
     ## Install nvm and nodejs
     # check for nvm installed: if not installed, install it.
@@ -14,8 +17,8 @@ installNodejs() {
         echo "nvm is already installed"
     else
         echo "nvm is not installed, installing it..."
-        sudo apt update
-        sudo apt install curl -y
+        # sudo apt update
+        # sudo apt install curl -y
         cd "$HOME"
         curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
         export NVM_DIR="$HOME/.nvm"
@@ -126,7 +129,6 @@ cp -ru "$HOMELAB_DIR"/. "$INSTALL_DIR"/
 # - aggiorna tutti i valori che nel template non sono vuoti
 # - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
 node "$INSTALL_DATA_DIR/scripts/setup_env.ts" "$INSTALL_DATA_DIR/.env" "$HOMELAB_DIR/.env"
-#! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
 
 # TODO: deploy configuration server
 ## TODO: deploy web config server;
