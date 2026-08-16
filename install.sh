@@ -7,6 +7,34 @@ HOMELAB_DIR="$TMP_DIR/homelab"
 INSTALL_DATA_DIR="$TMP_DIR/install"
 BACKUP_DIR=""
 
+installNodejs() {
+    ## Install nvm and nodejs
+    # check for nvm installed: if not installed, install it.
+    if command -v nvm &> /dev/null; then
+        echo "nvm is already installed"
+    else
+        echo "nvm is not installed, installing it..."
+        sudo apt update
+        sudo apt install curl -y
+        cd "$HOME"
+        curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+        export NVM_DIR="$HOME/.nvm"
+        source ~/.bashrc #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    fi
+
+    NODE_CUR_VER=$(node -v 2>/dev/null || true)
+    if [ -n "$NODE_VERSION" ] && [ "$NODE_CUR_VER" == "$NODE_VERSION" ]; then
+        echo "Node $NODE_VERSION is already installed"
+    else
+        echo "Node $NODE_VERSION is not installed, installing it..."
+        # Install nodejs (LTS version)
+        # nvm install --lts
+        if [ -n "$NODE_VERSION" ]; then
+            nvm install "$NODE_VERSION"
+        fi
+    fi
+}
+
 # Function to clean up temporary directory and restore backup on error
 cleanup() {
     local exit_code=$?
@@ -30,6 +58,8 @@ cleanup() {
 
 trap cleanup EXIT
 
+installNodejs
+
 read -r -p "Enter the Homelab installation directory (default: ~/conerhomelab): " INSTALL_DIR
 INSTALL_DIR=${INSTALL_DIR:-$HOME/conerhomelab}
 
@@ -47,21 +77,12 @@ mkdir -p "$TMP_DIR"
 curl -sSL "$RELEASE_URL" | tar -xz -C "$TMP_DIR"
 
 #1. Copy old values of previously installed homelab's .env file into the tmp installer directory ($HOMELAB_DIR)
-# A subsequent step in the setup scripts will sync the .env file from the $TMP_DIR/install directory
+# A subsequent step in the script will sync the .env file from the $TMP_DIR/install directory
 if [ -f "$INSTALL_DIR/.env" ]; then
     cp "$INSTALL_DIR/.env" "$HOMELAB_DIR/.env"
 else
     echo "INSTALL_DIR=$INSTALL_DIR" > "$HOMELAB_DIR/.env"
 fi  
-
-# load env variables from the template
-# Update homelab/.env file
-# - rimuove variabili non più utilizzate
-# - aggiunge le nuove
-# - aggiorna tutti i valori che nel template non sono vuoti
-# - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
-PYTHONPATH="$INSTALL_DATA_DIR/scripts" python3 -c "from setup_env import setup_env; setup_env('$INSTALL_DATA_DIR/.env', '$HOMELAB_DIR/.env')"
-#! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
 
 #2. Copy old secrets files in the installer directory
 echo "Mantaining existing secrets files if present ..."
@@ -97,24 +118,17 @@ cp -ru "$HOMELAB_DIR"/. "$INSTALL_DIR"/
 # sudo rm -f $TO_REMOVE_FILES
 # sudo rm -rf $TO_REMOVE_DIRS
 
+
+# load env variables from the template
+# Update homelab/.env file
+# - rimuove variabili non più utilizzate
+# - aggiunge le nuove
+# - aggiorna tutti i valori che nel template non sono vuoti
+# - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
+node "$INSTALL_DATA_DIR/scripts/setup_env.ts" "$INSTALL_DATA_DIR/.env" "$HOMELAB_DIR/.env"
+#! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
+
 # TODO: deploy configuration server
-## Install nvm and nodejs
-NODE_CUR_VER=$(node -v 2>/dev/null || true)
-if [ -n "$NODE_VERSION" ] && [ "$NODE_CUR_VER" == "$NODE_VERSION" ]; then
-    echo "Node is already installed"
-else
-    cd ~
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
-    export NVM_DIR="$HOME/.nvm"
-    source ~/.bashrc #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-    # Install nodejs (LTS version)
-    # nvm install --lts
-    if [ -n "$NODE_VERSION" ]; then
-        nvm install "$NODE_VERSION"
-    fi
-fi
-
 ## TODO: deploy web config server;
 ## TODO: deploy web config ui;
 
