@@ -22,7 +22,8 @@ installNodejs() {
         cd "$HOME"
         curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
         export NVM_DIR="$HOME/.nvm"
-        source ~/.bashrc #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        #source "$HOME/.bashrc"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     fi
 
     NODE_CUR_VER=$(node -v 2>/dev/null || true)
