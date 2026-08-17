@@ -24,6 +24,7 @@ installNodejs() {
         export NVM_DIR="$HOME/.nvm"
         #source "$HOME/.bashrc"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
     fi
 
     NODE_CUR_VER=$(node -v 2>/dev/null || true)
@@ -64,8 +65,8 @@ trap cleanup EXIT
 
 installNodejs
 
-read -r -p "Enter the Homelab installation directory (default: ~/conerhomelab): " INSTALL_DIR
-INSTALL_DIR=${INSTALL_DIR:-$HOME/conerhomelab}
+read -r -p "Enter the Homelab installation directory (default: ~/conerhomelab): " INSTALL_DIR < /dev/tty
+INSTALL_DIR=${INSTALL_DIR:-"$HOME/conerhomelab"}
 
 # Backup existing installation if present
 if [ -d "$INSTALL_DIR" ]; then
@@ -116,6 +117,7 @@ mkdir -p "$INSTALL_DIR"
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
 # L'opzione -r è necessaria per copiare ricorsivamente le directory e i loro contenuti.
 cp -ru "$HOMELAB_DIR"/. "$INSTALL_DIR"/
+echo "  - COPIED"
 
 # Occorrerà dunque eliminare manualmente i file che non servono più, ad esempio quelli generati dai container dopo l'installazione iniziale.
 # In questo modo, se in futuro aggiorneremo i file di configurazione nella cartella homelab, basterà rilanciare questo script per copiare solo i file aggiornati, senza sovrascrivere quelli che sono stati modificati manualmente dopo l'installazione iniziale.
@@ -130,6 +132,7 @@ cp -ru "$HOMELAB_DIR"/. "$INSTALL_DIR"/
 # - aggiorna tutti i valori che nel template non sono vuoti
 # - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
 node "$INSTALL_DATA_DIR/scripts/setup_env.ts" "$INSTALL_DATA_DIR/.env" "$HOMELAB_DIR/.env"
+#! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
 
 # TODO: deploy configuration server
 ## TODO: deploy web config server;
