@@ -65,7 +65,9 @@ trap cleanup EXIT
 
 installNodejs
 
-read -r -p "Enter the Homelab installation directory (default: ~/conerhomelab): " INSTALL_DIR < /dev/tty
+echo
+echo "To mantain existing settings, enter the same installation directory. Otherwise, a new one for a fresh install."
+read -r -p "Installation directory (default: $HOME/conerhomelab): " INSTALL_DIR < /dev/tty
 INSTALL_DIR=${INSTALL_DIR:-"$HOME/conerhomelab"}
 
 # Backup existing installation if present
@@ -87,7 +89,16 @@ if [ -f "$INSTALL_DIR/.env" ]; then
     cp "$INSTALL_DIR/.env" "$HOMELAB_DIR/.env"
 else
     echo "INSTALL_DIR=$INSTALL_DIR" > "$HOMELAB_DIR/.env"
-fi  
+fi
+
+# load env variables from the template
+# Update homelab/.env file
+# - rimuove variabili non più utilizzate
+# - aggiunge le nuove
+# - aggiorna tutti i valori che nel template non sono vuoti
+# - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
+node "$INSTALL_DATA_DIR/scripts/setup_env.ts" "$INSTALL_DATA_DIR/.env" "$HOMELAB_DIR/.env" "INSTALL_DIR=$INSTALL_DIR"
+#! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
 
 #2. Copy old secrets files in the installer directory
 echo "Mantaining existing secrets files if present ..."
@@ -110,8 +121,6 @@ docker compose -f "$INSTALL_DIR"/docker-compose.yml down 2>/dev/null || true
 
 #4. Copy homelab files into installation directory
 echo "Copying homelab files into $INSTALL_DIR ..."
-# Remove INSTALL_DIR for a fresh installation
-rm -rf "$INSTALL_DIR" 2>/dev/null || echo "Installation directory not found, creating a new one"
 mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
@@ -123,16 +132,6 @@ echo "  - COPIED"
 # In questo modo, se in futuro aggiorneremo i file di configurazione nella cartella homelab, basterà rilanciare questo script per copiare solo i file aggiornati, senza sovrascrivere quelli che sono stati modificati manualmente dopo l'installazione iniziale.
 # sudo rm -f $TO_REMOVE_FILES
 # sudo rm -rf $TO_REMOVE_DIRS
-
-
-# load env variables from the template
-# Update homelab/.env file
-# - rimuove variabili non più utilizzate
-# - aggiunge le nuove
-# - aggiorna tutti i valori che nel template non sono vuoti
-# - chiede all'utente di inserire i valori mancanti # Possiamo farlo in web-config invece che con uno script.
-node "$INSTALL_DATA_DIR/scripts/setup_env.ts" "$INSTALL_DATA_DIR/.env" "$HOMELAB_DIR/.env"
-#! You need to run the script from inside INSTALL_DIR/install/scripts, otherwise the relative paths will not work
 
 # TODO: deploy configuration server
 ## TODO: deploy web config server;
