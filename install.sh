@@ -58,13 +58,13 @@ cleanup() {
             mv "$BACKUP_DIR" "$INSTALL_DIR" 2>/dev/null || sudo mv "$BACKUP_DIR" "$INSTALL_DIR"
             echo "Backup restored successfully."
         fi
+        if [ -f /etc/systemd/system/pm2-"$USER".service ]; then
+            eval "$(pm2 unstartup systemd | tail -n 1)"
+        fi
     fi
     if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
         echo "Cleaning up temporary directory $TMP_DIR ..."
         rm -rf "$TMP_DIR"
-    fi
-    if [ -f /etc/systemd/system/pm2-"$USER".service ]; then
-        eval "$(pm2 unstartup systemd | tail -n 1)"
     fi
 }
 
@@ -141,7 +141,7 @@ echo "  - COPIED"
 # sudo rm -rf $TO_REMOVE_DIRS
 
 # TODO: deploy web config app (server + ui)
-cd "$HOMELAB_DIR"/web-config
+cd "$INSTALL_DIR"/web-config
 pm2 start ecosystem.config.js --env production
 pm2 save
 
