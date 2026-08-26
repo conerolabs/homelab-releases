@@ -38,6 +38,10 @@ installNodejs() {
             nvm install "$NODE_VERSION"
         fi
     fi
+
+    npm install pm2 -g
+    pm2 completion install
+    eval "$(pm2 startup | tail -n 1)" # create systemd entries to run pm2 on hostreboot
 }
 
 # Function to clean up temporary directory and restore backup on error
@@ -133,8 +137,9 @@ echo "  - COPIED"
 # sudo rm -f $TO_REMOVE_FILES
 # sudo rm -rf $TO_REMOVE_DIRS
 
-# TODO: deploy configuration server
-## TODO: deploy web config server;
-## TODO: deploy web config ui;
+# TODO: deploy web config app (server + ui)
+cd "$HOMELAB_DIR"/web-config
+pm2 start ecosystem.config.js
+pm2 save
 
 #docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
