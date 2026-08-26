@@ -63,6 +63,9 @@ cleanup() {
         echo "Cleaning up temporary directory $TMP_DIR ..."
         rm -rf "$TMP_DIR"
     fi
+    if [ -f /etc/systemd/system/pm2-"$USER".service ]; then
+        eval "$(pm2 unstartup systemd | tail -n 1)"
+    fi
 }
 
 trap cleanup EXIT
@@ -139,7 +142,7 @@ echo "  - COPIED"
 
 # TODO: deploy web config app (server + ui)
 cd "$HOMELAB_DIR"/web-config
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.js --env production
 pm2 save
 
 #docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
