@@ -58,6 +58,8 @@ cleanup() {
             mv "$BACKUP_DIR" "$INSTALL_DIR" 2>/dev/null || sudo mv "$BACKUP_DIR" "$INSTALL_DIR"
             echo "Backup restored successfully."
         fi
+
+        # Disable pm2 on reboot
         if [ -f /etc/systemd/system/pm2-"$USER".service ]; then
             eval "$(pm2 unstartup systemd | tail -n 1)"
         fi
@@ -141,7 +143,8 @@ echo "  - COPIED"
 # sudo rm -rf $TO_REMOVE_DIRS
 
 # TODO: deploy web config app (server + ui)
-cd "$INSTALL_DIR"/web-config
+cd "$INSTALL_DIR"/web-config/backend
+npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
 
