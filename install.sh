@@ -74,6 +74,9 @@ cleanup() {
     fi
     if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
         echo "Cleaning up temporary directory $TMP_DIR ..."
+        if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
+            echo "You can eventually restore previous installation from $BACKUP_DIR directory"
+        fi
         rm -rf "$TMP_DIR"
     fi
 }
@@ -104,6 +107,7 @@ curl -sSL "$RELEASE_URL" | tar -xz -C "$TMP_DIR"
 # A subsequent step in the script will sync the .env file from the $TMP_DIR/install directory
 if [ -f "$INSTALL_DIR/.env" ]; then
     cp "$INSTALL_DIR/.env" "$HOMELAB_DIR/.env"
+    node "$INSTALL_DATA_DIR/scripts/setup_enabled.ts" "$INSTALL_DIR/homelab.db" "$HOMELAB_DIR/homelab.db"
 else
     echo "INSTALL_DIR=$INSTALL_DIR" > "$HOMELAB_DIR/.env"
 fi
@@ -137,7 +141,7 @@ docker compose -f "$INSTALL_DIR"/docker-compose.yml down 2>/dev/null || true
 #bash $TMP_DIR/install/scripts/2-setup.sh
 
 #4. Copy homelab files into installation directory
-echo "Copying homelab files into $INSTALL_DIR ..."
+echo -n "Copying homelab files into $INSTALL_DIR ..."
 mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
@@ -158,6 +162,6 @@ cd "$INSTALL_DIR"/web-config/backend
 npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
-pm2 logs $WEB_CONFIG_APP --lines 24
+pm2 logs $WEB_CONFIG_APP --lines 24 --nostream
 
 #docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
