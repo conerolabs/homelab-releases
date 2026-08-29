@@ -6,6 +6,7 @@ TMP_DIR="$HOME/tmp/homelabinstaller"
 HOMELAB_DIR="$TMP_DIR/homelab"
 INSTALL_DATA_DIR="$TMP_DIR/install"
 BACKUP_DIR=""
+WEB_CONFIG_APP="web-config-app"
 
 NVM_VERSION='v0.40.6'
 NODE_VERSION='v24.18.0'
@@ -39,9 +40,16 @@ installNodejs() {
         fi
     fi
 
-    npm install pm2 -g
-    pm2 completion install
-    eval "$(pm2 startup | tail -n 1)" # create systemd entries to run pm2 on hostreboot
+    if command -v pm2 &> /dev/null; then
+        echo "pm2 is already installed"
+        # if process is running, delete it (we'll restart it after reinstallation)
+        pm2 delete $WEB_CONFIG_APP 2>/dev/null || true
+    else
+        echo "pm2 is not installed, installing it..."
+        npm install pm2 -g
+        pm2 completion install
+        eval "$(pm2 startup | tail -n 1)" # create systemd entries to run pm2 on hostreboot
+    fi
 }
 
 # Function to clean up temporary directory and restore backup on error
@@ -142,10 +150,14 @@ echo "  - COPIED"
 # sudo rm -f $TO_REMOVE_FILES
 # sudo rm -rf $TO_REMOVE_DIRS
 
+cd "$INSTALL_DIR"/web-config/commons
+npm install
+
 # TODO: deploy web config app (server + ui)
 cd "$INSTALL_DIR"/web-config/backend
 npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
+pm2 logs $WEB_CONFIG_APP --lines 24
 
 #docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
