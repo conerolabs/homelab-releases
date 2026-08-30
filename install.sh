@@ -107,6 +107,7 @@ curl -sSL "$RELEASE_URL" | tar -xz -C "$TMP_DIR"
 # A subsequent step in the script will sync the .env file from the $TMP_DIR/install directory
 if [ -f "$INSTALL_DIR/.env" ]; then
     cp "$INSTALL_DIR/.env" "$HOMELAB_DIR/.env"
+    echo
     node "$INSTALL_DATA_DIR/scripts/setup_enabled.ts" "$INSTALL_DIR/homelab.db" "$HOMELAB_DIR/homelab.db"
 else
     echo "INSTALL_DIR=$INSTALL_DIR" > "$HOMELAB_DIR/.env"
@@ -134,7 +135,7 @@ docker compose -f "$INSTALL_DIR"/docker-compose.yml down 2>/dev/null || true
 # TODO: Valuate if to run pre-install script (for example to update the OS) or directly the setup scripts
 # TODO: Valuate if to run deps-install script (for example to install docker) or directly the setup scripts
 # At the moment we will run deps-install script from web config ui
-#bash $TMP_DIR/install/scripts/1-deps-install.sh
+#bash $TMP_DIR/homelab/scripts/deps/deps-install-all.sh
 
 #3. Run setup scripts
 # At the moment we will run setup script from web config ui
@@ -162,6 +163,5 @@ cd "$INSTALL_DIR"/web-config/backend
 npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
-pm2 logs $WEB_CONFIG_APP --lines 24 --nostream
 
 #docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
