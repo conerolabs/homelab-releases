@@ -17,7 +17,7 @@ installNodejs() {
     if command -v nvm &> /dev/null; then
         echo "nvm is already installed"
     else
-        echo "nvm is not installed, installing it..."
+        echo "nvm is not installed, installing version $NVM_VERSION..."
         # sudo apt update
         # sudo apt install curl -y
         cd "$HOME"
