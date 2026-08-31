@@ -8,7 +8,7 @@ INSTALL_DATA_DIR="$TMP_DIR/install"
 BACKUP_DIR=""
 WEB_CONFIG_APP="web-config-app"
 
-NVM_VERSION='v0.40.6'
+NVM_VERSION='v0.40.7'
 NODE_VERSION='v24.18.0'
 
 installNodejs() {
