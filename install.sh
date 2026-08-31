@@ -21,7 +21,7 @@ installNodejs() {
         # sudo apt update
         # sudo apt install curl -y
         cd "$HOME"
-        curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/refs/tags/${NVM_VERSION}/install.sh" | bash
+        curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
         export NVM_DIR="$HOME/.nvm"
         #source "$HOME/.bashrc"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
