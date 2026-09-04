@@ -101,7 +101,7 @@ fi
 #0. Downloads and extracts the release files from the repository in a tmp directory
 echo "Downloading and extracting release files from repository ..."
 mkdir -p "$TMP_DIR"
-curl -sSL "$RELEASE_URL" | tar -vxz -C "$TMP_DIR"
+curl -sSL "$RELEASE_URL" | tar -xz -C "$TMP_DIR"
 
 #1. Copy old values of previously installed homelab's .env file into the tmp installer directory ($HOMELAB_DIR)
 # A subsequent step in the script will sync the .env file from the $TMP_DIR/install directory
@@ -147,7 +147,7 @@ mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
 # L'opzione -r è necessaria per copiare ricorsivamente le directory e i loro contenuti.
-cp -ru "$HOMELAB_DIR"/. "$INSTALL_DIR"/
+cp -ruv "$HOMELAB_DIR"/. "$INSTALL_DIR"/
 echo "  - COPIED"
 
 # Occorrerà dunque eliminare manualmente i file che non servono più, ad esempio quelli generati dai container dopo l'installazione iniziale.
