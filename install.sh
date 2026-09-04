@@ -101,7 +101,7 @@ fi
 #0. Downloads and extracts the release files from the repository in a tmp directory
 echo "Downloading and extracting release files from repository ..."
 mkdir -p "$TMP_DIR"
-curl -sSL "$RELEASE_URL" | tar -xz -C "$TMP_DIR"
+curl -sSL "$RELEASE_URL" | tar -vxz -C "$TMP_DIR"
 
 #1. Copy old values of previously installed homelab's .env file into the tmp installer directory ($HOMELAB_DIR)
 # A subsequent step in the script will sync the .env file from the $TMP_DIR/install directory
