@@ -12,6 +12,9 @@ NVM_VERSION='v0.40.7'
 NODE_VERSION='v24.18.0'
 
 installNodejs() {
+    echo
+    echo "Preparing nodejs environment..."
+    echo
     ## Install nvm and nodejs
     # check for nvm installed: if not installed, install it.
     if command -v nvm &> /dev/null; then
@@ -78,6 +81,7 @@ cleanup() {
             echo "You can eventually restore previous installation from $BACKUP_DIR directory"
         fi
         rm -rf "$TMP_DIR"
+        echo
     fi
 }
 
@@ -147,7 +151,9 @@ mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
 # L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
 # L'opzione -r è necessaria per copiare ricorsivamente le directory e i loro contenuti.
-cp -ruv "$HOMELAB_DIR"/. "$INSTALL_DIR"/
+# L'opzione -p preserva il timestamp originale (dei file sorgente).
+# L'opzione -v mostra il nome di ogni file mentre viene copiato.
+cp -ru --preserve="timestamp" "$HOMELAB_DIR"/. "$INSTALL_DIR"/
 echo "  - COPIED"
 
 # Occorrerà dunque eliminare manualmente i file che non servono più, ad esempio quelli generati dai container dopo l'installazione iniziale.
@@ -163,5 +169,4 @@ cd "$INSTALL_DIR"/web-config/backend
 npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
-
-#docker compose -f "$INSTALL_DIR"/docker-compose.yml up -d
+echo
