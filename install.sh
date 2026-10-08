@@ -91,7 +91,7 @@ installNodejs
 
 echo
 echo "To mantain existing settings, enter the same installation directory. Otherwise, a new one for a fresh install."
-read -r -p "Installation directory (default: $HOME/conerhomelab): " INSTALL_DIR < /dev/tty
+read -r -p "Insert installation directory (just press Enter for default: $HOME/conerhomelab): " INSTALL_DIR < /dev/tty
 INSTALL_DIR=${INSTALL_DIR:-"$HOME/conerhomelab"}
 
 # Backup existing installation if present
@@ -170,3 +170,8 @@ npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
 echo
+#echo "Your lab is available at LAN_IP:8090"
+
+# Setup bash aliases
+cat "$INSTALL_DATA_DIR/.bash_aliases" >> "$HOME/.bash_aliases"
+sort -u "$HOME"/.bash_aliases > "$HOME"/.bash_aliases.tmp && mv "$HOME"/.bash_aliases.tmp "$HOME"/.bash_aliases
