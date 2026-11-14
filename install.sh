@@ -9,7 +9,7 @@ BACKUP_DIR=""
 WEB_CONFIG_APP="web-config-app"
 
 NVM_VERSION='v0.40.7'
-NODE_VERSION='v24.18.0'
+NODE_VERSION_ALIAS='lts/krypton'
 
 installNodejs() {
     echo
@@ -31,15 +31,16 @@ installNodejs() {
         
     fi
 
-    NODE_CUR_VER=$(node -v 2>/dev/null || true)
+    NODE_VERSION=$(nvm version-remote $NODE_VERSION_ALIAS 2>/dev/null || true)
+    NODE_CUR_VER=$(nvm current 2>/dev/null || true)
     if [ -n "$NODE_VERSION" ] && [ "$NODE_CUR_VER" == "$NODE_VERSION" ]; then
-        echo "Node $NODE_VERSION is already installed"
+        echo "Node $NODE_VERSION_ALIAS ($NODE_VERSION) is already installed"
     else
-        echo "Node $NODE_VERSION is not installed, installing it..."
+        echo "Node $NODE_VERSION_ALIAS ($NODE_VERSION) is not installed, installing it..."
         # Install nodejs (LTS version)
         # nvm install --lts
-        if [ -n "$NODE_VERSION" ]; then
-            nvm install "$NODE_VERSION"
+        if [ -n "$NODE_VERSION_ALIAS" ]; then
+            nvm install "$NODE_VERSION_ALIAS"
         fi
     fi
 
@@ -108,6 +109,7 @@ mkdir -p "$TMP_DIR"
 curl -sSL "$RELEASE_URL" | tar -xz -C "$TMP_DIR"
 
 #1. Copy old values of previously installed homelab's .env file into the tmp installer directory ($HOMELAB_DIR)
+#2. align enabled/disabled service status in $HOMELAB_DIR/homelab.db with previously installed homelab's $INSTALL_DIR/homelab.db
 # A subsequent step in the script will sync the .env file from the $TMP_DIR/install directory
 if [ -f "$INSTALL_DIR/.env" ]; then
     cp "$INSTALL_DIR/.env" "$HOMELAB_DIR/.env"
@@ -138,11 +140,11 @@ docker compose -f "$INSTALL_DIR"/docker-compose.yml down 2>/dev/null || true
 
 # TODO: Valuate if to run pre-install script (for example to update the OS) or directly the setup scripts
 # TODO: Valuate if to run deps-install script (for example to install docker) or directly the setup scripts
-# At the moment we will run deps-install script from web config ui
+# At the moment we will run deps-install script from web config ui, do not run it from here
 #bash $TMP_DIR/homelab/scripts/deps/deps-install-all.sh
 
 #3. Run setup scripts
-# At the moment we will run setup script from web config ui
+# At the moment we will run setup script from web config ui, do not run it from here
 #bash $TMP_DIR/install/scripts/2-setup.sh
 
 #4. Copy homelab files into installation directory
@@ -170,8 +172,9 @@ npm install
 pm2 start ecosystem.config.js --env production
 pm2 save
 echo
-#echo "Your lab is available at LAN_IP:8090"
 
 # Setup bash aliases
+echo -n "Adding bash aliases ..."
 cat "$INSTALL_DATA_DIR/.bash_aliases" >> "$HOME/.bash_aliases"
 sort -u "$HOME"/.bash_aliases > "$HOME"/.bash_aliases.tmp && mv "$HOME"/.bash_aliases.tmp "$HOME"/.bash_aliases
+echo "  - DONE"
