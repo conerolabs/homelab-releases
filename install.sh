@@ -130,6 +130,7 @@ node "$INSTALL_DATA_DIR/scripts/setup_env.ts" "$INSTALL_DATA_DIR/.env" "$HOMELAB
 
 #2. Copy old secrets files in the installer directory
 echo "Mantaining existing secrets files if present ..."
+mkdir -p "$HOMELAB_DIR"/{authelia,vaultwarden,gatus,rustical,web-config}/secrets 2>/dev/null || true
 cp -r "$INSTALL_DIR"/authelia/secrets "$HOMELAB_DIR"/authelia/secrets 2>/dev/null || true
 cp -r "$INSTALL_DIR"/vaultwarden/secrets "$HOMELAB_DIR"/vaultwarden/secrets 2>/dev/null || true
 cp -r "$INSTALL_DIR"/gatus/secrets "$HOMELAB_DIR"/gatus/secrets 2>/dev/null || true
@@ -151,7 +152,7 @@ docker compose -f "$INSTALL_DIR"/docker-compose.yml down 2>/dev/null || true
 echo -n "Copying homelab files into $INSTALL_DIR ..."
 mkdir -p "$INSTALL_DIR"
 # L'opzione -u di cp copia solo i file che sono più recenti di quelli già presenti nella destinazione, evitando di sovrascrivere file più recenti con versioni più vecchie.
-# L'opzione -u mantiene inoltre i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
+# mantiene i file nella destinazione se non esistono nella sorgente, evitando di cancellare file che potrebbero essere stati creati o modificati dopo l'installazione iniziale.
 # L'opzione -r è necessaria per copiare ricorsivamente le directory e i loro contenuti.
 # L'opzione -p preserva il timestamp originale (dei file sorgente).
 # L'opzione -v mostra il nome di ogni file mentre viene copiato.
